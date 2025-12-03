@@ -19,12 +19,22 @@ const app = express();
 
 
 
-app.use(cors({
-    origin: ["http://localhost:3000", "http://localhost:3001"],
+// Allow CORS for dynamic origins (reflect request origin). This enables
+// deployed frontends to access the API while keeping credentials enabled.
+app.use(
+  cors({
+    origin: true, // reflect request origin
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
-  }));
+  })
+);
+
 app.use(bodyParser.json());
+
+// Parse cookies so `req.cookies` is available to auth middleware
+app.use(cookieParser());
+
+app.use(express.json());
 
 // app.get("/addHoldings", async (req, res) => {
 //   let tempHoldings = [
@@ -218,14 +228,11 @@ app.post("/newOrder", async (req, res) => {
   res.send("Order saved!");
 });
 
+// Mount auth routes and start the server after middleware is configured
+app.use("/", authRoute);
+
 app.listen(PORT, () => {
   console.log("App started!");
   mongoose.connect(uri);
   console.log("DB started!");
 });
-
-app.use(cookieParser());
-
-app.use(express.json());
-
-app.use("/", authRoute);
