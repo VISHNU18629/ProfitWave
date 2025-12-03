@@ -22,7 +22,7 @@ const ProtectedHome = () => {
       try {
         // Backend runs on PORT defined in backend/index.js (default 3002)
         const { data } = await axios.post(
-          "http://localhost:3002",
+          "https://profitwave-y5s3.onrender.com",
           {},
           { withCredentials: true }
         );
