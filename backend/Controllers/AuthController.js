@@ -11,13 +11,21 @@ module.exports.Signup = async (req, res, next) => {
     }
     const user = await User.create({ email, password, username, createdAt });
     const token = createSecretToken(user._id);
-    // Set cookie for client. For cross-site cookies, SameSite=None and Secure are required.
-    res.cookie("token", token, {
+    // Choose cookie options depending on environment:
+    // - production: cross-site requests (Netlify <-> Render) need SameSite=None and Secure=true
+    // - development: localhost should use SameSite=lax and secure=false so the browser accepts the cookie
+    const cookieOptions = process.env.NODE_ENV === "production" ? {
       httpOnly: true,
       sameSite: "none",
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       maxAge: 3 * 24 * 60 * 60 * 1000,
-    });
+    } : {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+      maxAge: 3 * 24 * 60 * 60 * 1000,
+    };
+    res.cookie("token", token, cookieOptions);
     res.status(201).json({ message: "User signed in successfully", success: true, user });
     next();
   } catch (error) {
@@ -40,12 +48,18 @@ module.exports.Login = async (req, res, next) => {
       return res.status(400).json({ success: false, message:'Incorrect password or email' }) 
     }
      const token = createSecretToken(user._id);
-     res.cookie("token", token, {
+     const cookieOptions2 = process.env.NODE_ENV === "production" ? {
       httpOnly: true,
       sameSite: "none",
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       maxAge: 3 * 24 * 60 * 60 * 1000,
-    });
+    } : {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+      maxAge: 3 * 24 * 60 * 60 * 1000,
+    };
+    res.cookie("token", token, cookieOptions2);
     res.status(201).json({ message: "User logged in successfully", success: true });
      next()
   } catch (error) {
