@@ -16,7 +16,7 @@ function Navbar() {
     const verify = async () => {
       try {
         const { data } = await axios.post(
-          "https://profitwave-y5s3.onrender.com",
+          "http://localhost:3002",
           {},
           { withCredentials: true }
         );
