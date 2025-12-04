@@ -115,7 +115,7 @@ function Navbar() {
               <li className="nav-item">
                 <a 
                   className="nav-link active" 
-                  href="https://profitwavdashboard.netlify.app" 
+                  href="https://dashboard18629.netlify.app/" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   style={{ cursor: "pointer" }}
