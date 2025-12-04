@@ -15,38 +15,43 @@ const ProtectedHome = () => {
 
   useEffect(() => {
     const verifyCookie = async () => {
-      if (!cookies.token) {
-        navigate("/login");
-        return;
-      }
+      console.log("ProtectedHome: Starting verification...");
       try {
         // Backend runs on PORT defined in backend/index.js (default 3002)
+        // This call will automatically include the token cookie with withCredentials
         const { data } = await axios.post(
-          "http://localhost:3002",
+          "https://profitwave-y5s3.onrender.com/",
           {},
           { withCredentials: true }
         );
+        console.log("ProtectedHome: Verification response:", data);
         const { status, user } = data;
         if (status) {
           setUsername(user);
           setIsAuthenticated(true);
+          // Save auth state to localStorage
+          localStorage.setItem("isAuthenticated", "true");
           toast(`Hello ${user}`, {
             position: "top-right",
           });
           setLoading(false);
         } else {
+          console.log("ProtectedHome: Status is false, redirecting to login");
           removeCookie("token");
+          localStorage.setItem("isAuthenticated", "false");
           navigate("/login");
           setLoading(false);
         }
       } catch (error) {
+        console.error("ProtectedHome: Auth verification error:", error);
         removeCookie("token");
+        localStorage.setItem("isAuthenticated", "false");
         navigate("/login");
         setLoading(false);
       }
     };
     verifyCookie();
-  }, [cookies, navigate, removeCookie]);
+  }, [navigate, removeCookie]);
 
   const handleLogout = () => {
     removeCookie("token");

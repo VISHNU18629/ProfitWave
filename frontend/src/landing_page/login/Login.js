@@ -33,7 +33,7 @@ const Login = () => {
     e.preventDefault();
     try {
       const { data } = await axios.post(
-        "http://localhost:3002/login",
+        "https://profitwave-y5s3.onrender.com/login",
         {
           ...inputValue,
         },
@@ -43,14 +43,18 @@ const Login = () => {
       const { success, message } = data;
       if (success) {
         handleSuccess(message);
+        // Set auth state to localStorage immediately
+        localStorage.setItem("isAuthenticated", "true");
+        // Small delay to ensure cookie is fully set before redirect
         setTimeout(() => {
-          navigate("/home");
+          navigate("/home", { replace: true });
         }, 1000);
       } else {
         handleError(message);
       }
     } catch (error) {
       console.log(error);
+      handleError(error?.response?.data?.message || "Login failed");
     }
     setInputValue({
       ...inputValue,

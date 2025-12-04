@@ -5,6 +5,9 @@ const bcrypt = require("bcryptjs");
 module.exports.Signup = async (req, res, next) => {
   try {
     const { email, password, username, createdAt } = req.body;
+    if (!email || !password || !username) {
+      return res.status(400).json({ success: false, message: "All fields are required" });
+    }
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ success: false, message: "User already exists" });
@@ -27,9 +30,9 @@ module.exports.Signup = async (req, res, next) => {
     };
     res.cookie("token", token, cookieOptions);
     res.status(201).json({ message: "User signed in successfully", success: true, user });
-    next();
   } catch (error) {
     console.error(error);
+    res.status(400).json({ success: false, message: error.message || "Signup failed" });
   }
 };
 
@@ -61,8 +64,8 @@ module.exports.Login = async (req, res, next) => {
     };
     res.cookie("token", token, cookieOptions2);
     res.status(201).json({ message: "User logged in successfully", success: true });
-     next()
   } catch (error) {
     console.error(error);
+    res.status(400).json({ success: false, message: error.message || "Login failed" });
   }
 }

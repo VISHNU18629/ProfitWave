@@ -6,35 +6,64 @@ import axios from "axios";
 function Navbar() {
   const navigate = useNavigate();
   const [cookies, , removeCookie] = useCookies(["token"]);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // Initialize from localStorage
+    return localStorage.getItem("isAuthenticated") === "true";
+  });
 
+  // Check authentication on mount
   useEffect(() => {
-    // If the token cookie exists on the client, assume authenticated until user logs out.
-    const hasToken = document.cookie && document.cookie.indexOf("token=") !== -1;
-    if (hasToken) setIsAuthenticated(true);
-
-    const verify = async () => {
+    const checkAuth = async () => {
       try {
         const { data } = await axios.post(
-          "http://localhost:3002",
+          "https://profitwave-y5s3.onrender.com/",
           {},
           { withCredentials: true }
         );
-        // If server confirms, ensure state is true. If server does NOT confirm, do not
-        // automatically remove the Logout button here so the UI remains stable for the user
-        // until they explicitly click Logout. (We still keep this call to validate session.)
-        if (data && data.status) setIsAuthenticated(true);
+        console.log("Navbar: Auth check:", data);
+        if (data && data.status) {
+          setIsAuthenticated(true);
+          localStorage.setItem("isAuthenticated", "true");
+        } else {
+          setIsAuthenticated(false);
+          localStorage.setItem("isAuthenticated", "false");
+        }
       } catch (err) {
-        // Keep isAuthenticated as-is (do not set false) to avoid transient UI flicker.
-        console.warn("Auth verify failed (ignored for UI stability):", err?.message || err);
+        console.warn("Navbar: Auth check failed:", err?.message);
+        setIsAuthenticated(false);
+        localStorage.setItem("isAuthenticated", "false");
       }
     };
-    verify();
-  }, [cookies.token]);
+    checkAuth();
+  }, []);
+
+  // Listen for localStorage changes from other tabs/windows or signup/login
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      console.log("Navbar: Storage changed:", e);
+      if (e.key === "isAuthenticated") {
+        setIsAuthenticated(e.newValue === "true");
+      }
+    };
+    
+    window.addEventListener("storage", handleStorageChange);
+    
+    // Also check localStorage periodically in case changes happen in same tab
+    const checkInterval = setInterval(() => {
+      const authValue = localStorage.getItem("isAuthenticated") === "true";
+      setIsAuthenticated(authValue);
+    }, 500);
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(checkInterval);
+    };
+  }, []);
 
   const handleLogout = () => {
     removeCookie("token");
     setIsAuthenticated(false);
+    localStorage.setItem("isAuthenticated", "false");
     navigate("/signup");
   };
 
@@ -69,7 +98,11 @@ function Navbar() {
           <ul className="navbar-nav ms-auto mb-lg-0">
             <li className="nav-item">
               {isAuthenticated ? (
-                <button onClick={handleLogout} className="nav-link btn btn-link" style={{ cursor: "pointer" }}>
+                <button 
+                  onClick={handleLogout} 
+                  className="nav-link active" 
+                  style={{ cursor: "pointer", border: "none", background: "none", padding: "0.5rem 1rem" }}
+                >
                   Logout
                 </button>
               ) : (
@@ -78,6 +111,19 @@ function Navbar() {
                 </Link>
               )}
             </li>
+            {isAuthenticated && (
+              <li className="nav-item">
+                <a 
+                  className="nav-link active" 
+                  href="https://profitwavdashboard.netlify.app" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{ cursor: "pointer" }}
+                >
+                  Dashboard
+                </a>
+              </li>
+            )}
             <li className="nav-item">
               <Link className="nav-link active" aria-current="page" to="/about">
                 About
